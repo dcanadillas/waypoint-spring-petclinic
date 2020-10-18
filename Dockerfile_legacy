@@ -1,0 +1,9 @@
+# This Dockerfile is from legacy use. With Waypoint you don't need to define it if using "pack" stanza for buildpacks
+
+FROM anapsix/alpine-java
+
+LABEL maintainer="dcanadillas@hashicorp.com"
+
+COPY /target/spring-petclinic-2.0.0.BUILD-SNAPSHOT.jar /home/spring-petclinic-2.0.0.BUILD-SNAPSHOT.jar
+
+CMD ["java","-jar","/home/spring-petclinic-2.0.0.BUILD-SNAPSHOT.jar"]

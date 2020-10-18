@@ -1,0 +1,15 @@
+# Local OS files
+.DS_Store
+
+# Local .waypoint directories
+**/.waypoint/*
+
+backend.hcl
+backend-dr.hcl
+
+# This files are not supposed to upload
+## variables file to edit TFC 
+pyvars.txt
+## Some legacy Jenkins X configurations, just in case
+**/jx-requirements-*.yml
+
