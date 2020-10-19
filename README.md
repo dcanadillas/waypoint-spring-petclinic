@@ -2,14 +2,14 @@
 
 [HashiCorp Waypoint](https://waypointproject.io) is an exciting new solution to deploy your apps from Development to Production with a very easy opinionated lifecycle, from any platform to any environment.
 
-I have created this repo to show a waypoint release pipeline using a well known Spring demo application like [Spring Petclinic]().
+I have created this repo to show a waypoint release pipeline using a well known Spring demo application like [Spring Petclinic](https://github.com/spring-projects/spring-petclinic).
 
 
 ## Requirements
 
-* A Kubernetes cluster. I will show here a local cluster with Minikube, but you can also use some other local Kubernetes solutions like [Rancher K3s]() or [MicroK8s]()
-* The waypoint binary. You can download it [from here]()
-* Docker installed in your machine
+* A Kubernetes cluster. I will show here a local cluster with Minikube, but you can also use some other local Kubernetes solutions like [Rancher K3s](https://k3s.io/) or [MicroK8s](https://microk8s.io/)
+* The Waypoint binary. You can download it [from here](https://www.waypointproject.io/downloads)
+* [Docker](https://www.docker.com/get-started) installed in your machine
 * Some shell experience would be helpful, but not needed
 
 That's all!
@@ -127,7 +127,7 @@ If you go to your browser and authenticate into Waypoint you should see now your
 
 ![Waypoint Project](./docs/waypoint-ui-project.png)
 
-Let's deploy the Spring Petclinic application. It will build the Spring application using a [Cloud Native Buildpack](https://buildpacks.io/) builder, it will push the docker container into your registry, and it will deploy the application into the `waypoint`. Waypoint will make your application available in an environment URL, where you can access.
+Let's deploy the Spring Petclinic application. It will build the Spring application using a [Cloud Native Buildpack](https://buildpacks.io/) builder, it will push the docker container into your registry (if you changed to yours in `waypoint.hcl` file), and it will deploy the application into the `waypoint` namespace. Waypoint will make your application available in an environment URL, where you can access.
 
 Let's execute all of that with one simple CLI lifecycle command:
 ```bash
@@ -200,5 +200,32 @@ If you click to your deployment you should be redirected to the application:
 
 ![Spring Petclinic](./docs/petclinic.png)
 
+## Some tips
 
+You can check most of the info and details of your project from UI, but here are some interesting CLI commands to check several components of your project.
+
+To check all your deployments:
+```bash
+waypoint deployment list
+```
+
+To see logs of deployed application in your project:
+```bash
+waypoint logs
+```
+
+To connect to your container application deployed terminal:
+```bash
+waypoint exec bash
+```
+
+To see your artifacts built and the builder used:
+```bash
+waypoint artifact list-builds
+```
+
+Check the components info used in your `waypoint.hcl`:
+```bash
+waypoint docs
+```
 
