@@ -1,8 +1,9 @@
-# Deploying Spring Petclinic to Kubernetes with Waypoint
+# Deploying Spring Petclinic with Waypoint
 
 [HashiCorp Waypoint](https://waypointproject.io) is an exciting new solution to deploy your apps from Development to Production with a very easy opinionated lifecycle, from any platform to any environment.
 
 I have created this repo to show a waypoint release pipeline using a well known Spring demo application like [Spring Petclinic](https://github.com/spring-projects/spring-petclinic).
+
 
 
 ## Requirements
@@ -11,13 +12,14 @@ I have created this repo to show a waypoint release pipeline using a well known 
 * The Waypoint binary. You can download it [from here](https://www.waypointproject.io/downloads)
 * [Docker](https://www.docker.com/get-started) installed in your machine
 * Some shell experience would be helpful, but not needed
+* A GCP account and Cloud Run API enabled for the use case of deploying to Cloud Run.
 
 That's all!
 
 > NOTE: All this requirements are based on my tests done in MacOS (10.15.7)
 
 
-## Install Waypoint in Minikube
+## Install Waypoint
 
 If you didn't clone this repo, do it now:
 ```bash
@@ -28,6 +30,8 @@ This step is not really needed, but assuming that you already have the Waypoint 
 ```bash
 docker pull hashicorp/waypoint
 ```
+
+### If you install the server in Kubernetes (Minikube)
 
 Start your local Kubernetes cluster. I am using Minikube with a dedicated cluster profile named `waypoint`:
 ```bash
@@ -98,10 +102,29 @@ This should output your token to authenticate in the UI.
 
 Your Waypoint server is now deployed! Now you are ready to initialize your project.
 
+### If you install Waypoint in your local Docker
 
-## Initialize and deploy Spring Petclinic with Waypoint
+You can install Waypoing locally in Docker:
+```bash
+waypoint install -platform=docker -accept-tos
+```
 
-In this repo you have a `waypoint.hcl` configuration file for your project. But you may need to change the [`registry` stanza](https://www.waypointproject.io/docs/waypoint-hcl/registry#registry-stanza) to use your docker registry. (Please, bear in mind that this configuration is using a public registry to pull the image in the Deployment stage, but you need to have the authentication configured with the [`credentials helper`](https://docs.docker.com/engine/reference/commandline/login/#credential-helpers) to be able to push.):
+Once you deploy Waypoint server in Docker, you can open the UI:
+```bash
+waypoint ui
+```
+
+Follow the instructions in the UI to create your token with `waypoint token create`
+
+## Initialize Petclinic application deployments with Waypoint
+
+In this repo you have a `waypoint.hcl` configuration file for your project. It has three different environment deployments, defined each of them in an [`app` stanza](https://www.waypointproject.io/docs/waypoint-hcl/app):
+
+* Deploy to your local Docker installation
+* Deploy to Kubernetes
+* Deploy to Google Cloud Run
+
+You may need to change the [`registry` stanza](https://www.waypointproject.io/docs/waypoint-hcl/registry#registry-stanza) to use your docker registry. (Please, bear in mind that this configuration is using a public registry to pull the image in the Deployment stage, but you need to have the authentication configured with the [`credentials helper`](https://docs.docker.com/engine/reference/commandline/login/#credential-helpers) to be able to push.):
 
 ```hcl
 project = "spring-petclinic"
@@ -117,6 +140,10 @@ project = "spring-petclinic"
 ...
 
 ```
+> NOTE: Bear in mind that you will need access to Google Cloud Run and configure your credentials. You can do it by defining the `GOOGLE_APPLICATION_CREDENTIALS` in the same terminal where you initialize Waypoint project:
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=<your_Google_key_json_file_path>
+```
 
 You should be ready to init your project!
 ```
@@ -127,14 +154,32 @@ If you go to your browser and authenticate into Waypoint you should see now your
 
 ![Waypoint Project](./docs/waypoint-ui-project.png)
 
-Let's deploy the Spring Petclinic application. It will build the Spring application using a [Cloud Native Buildpack](https://buildpacks.io/) builder, it will push the docker container into your registry (if you changed to yours in `waypoint.hcl` file), and it will deploy the application into the `waypoint` namespace. Waypoint will make your application available in an environment URL, where you can access.
+And inside the project you will have three different apps:
 
-Let's execute all of that with one simple CLI lifecycle command:
+![Waypoint Apps](./docs/waypoint-ui-apps.png)
+
+## Deploy your application
+
+Let's deploy the Spring Petclinic application. It will build the Spring application using a [Cloud Native Buildpack](https://buildpacks.io/) builder, it will push the docker container into your registry (if you changed to yours in `waypoint.hcl` file), and it will deploy the application. Depending on the `app` used it will deploy on the environment selected: Kubernetes, Docker or Cloud Run. 
+
+
+ .
+
+Let's execute all of that with one simple CLI lifecycle command `waypoint up`:
+* If you deploy to Kubernetes the application will be deployed into the `waypoint` namespace. Waypoint will make your application available in an environment URL, where you can access:
 ```bash
-waypoint up
+waypoint up -app=kubernetes-petclinic
+```
+* Deploying to local Docker:
+```bash
+waypoint up -app=docker-petclinic
+```
+* I have parametrized the GCP project and region by defining the values in a file, so you need to define your values in the template `gcp-values-template.json` and change the file name to `gcp-values.json`. Then, you deploy to Google Cloud Run by:
+```bash
+waypoint up -app=cloudrun-petclinic
 ```
 
-The output should be something similat to:
+The output should be something similar to (example of the Kubernetes deployment):
 ```
 » Building...
 Creating new buildpack-based image using builder: heroku/buildpacks:18
@@ -202,26 +247,26 @@ If you click to your deployment you should be redirected to the application:
 
 ## Some tips
 
-You can check most of the info and details of your project from UI, but here are some interesting CLI commands to check several components of your project.
+You can check most of the info and details of your project from UI, but here are some interesting CLI commands to check several components of your project. Use the `-app` parameter to select the app deployed.
 
 To check all your deployments:
 ```bash
-waypoint deployment list
+waypoint deployment list -app=cloudrun-petclinic
 ```
 
 To see logs of deployed application in your project:
 ```bash
-waypoint logs
+waypoint logs -app=docker-petclinic
 ```
 
 To connect to your container application deployed terminal:
 ```bash
-waypoint exec bash
+waypoint exec -app=kubernetes-petclinic bash
 ```
 
 To see your artifacts built and the builder used:
 ```bash
-waypoint artifact list-builds
+waypoint artifact list-builds -app=kubernetes-petclinic
 ```
 
 Check the components info used in your `waypoint.hcl`:
